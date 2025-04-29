@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+  php:
+    image: app-php
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DATABASE_URL: 'mysql://app:!ChangeMe!@database:3306/app?serverVersion=8&charset=utf8mb4'
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+  database:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: app
+      MYSQL_USER: app
+      MYSQL_PASSWORD: root
+      MYSQL_RANDOM_ROOT_PASSWORD: "true"
+    volumes:
+      - database_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  sonarqube:
+    image: sonarqube:latest
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+
+  sonar-scanner:
+    image: sonarsource/sonar-scanner-cli:5
+    platform: linux/amd64
+    depends_on:
+      - sonarqube
+    environment:
+      - SONAR_HOST_URL=http://sonarqube:9000
+      - SONAR_LOGIN=squ_de94c1348c50f96ac389d47333505ed5b32839f9
+    volumes:
+      - .:/usr/src
+    working_dir: /usr/src
+
+volumes:
+  database_data:
+  caddy_data:
+  caddy_config:
+  sonarqube_data:
+  sonarqube_extensions:
