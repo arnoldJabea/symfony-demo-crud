@@ -20,16 +20,22 @@ class UtilisateurCrudController extends AbstractCrudController
     {
         return [
             IdField::new('idUtilisateur')->hideOnForm(),
-            TextField::new('nom'),
-            TextField::new('prenom'),
-            TextField::new('email'),
-            TextField::new('motDePasse'),
-            ChoiceField::new('role')
+            TextField::new('nom', 'Nom')
+                ->setlabel('Nom'),
+            TextField::new('prenom', 'Prénom')
+                ->setlabel('Prénom'),
+            TextField::new('email', 'Email')
+                ->setlabel('Email')
+                ->setHelp('L\'email doit être unique'),
+            TextField::new('motDePasse', 'Mot de passe'),
+            ChoiceField::new('role', 'Rôle')
+                ->setlabel('Rôle')
                 ->setChoices([
                     'Utilisateur' => 'utilisateur',
                     'Administrateur' => 'administrateur',
                 ]),
-            AssociationField::new('posts'),
+            AssociationField::new('posts', 'Posts')
+                ->setlabel('Posts')
         ];
     }
   
