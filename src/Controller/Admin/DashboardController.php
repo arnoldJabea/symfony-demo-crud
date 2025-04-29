@@ -2,6 +2,8 @@
 
 namespace App\Controller\Admin;
 
+use App\Entity\Post;
+use App\Entity\Utilisateur;
 use Symfony\Component\HttpFoundation\Response;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
@@ -14,23 +16,26 @@ class DashboardController extends AbstractDashboardController
 {
     public function index(): Response
     {
-        return parent::index();
 
         $adminUrlGenerator = $this->container->get(AdminUrlGenerator::class);
         return $this->redirect($adminUrlGenerator
-           // ->setController(OneOfYourCrudController::class)
+            ->setController(UtilisateurCrudController::class)
             ->generateUrl());
     }
 
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('App');
+            ->setTitle('Blog Arnold, Behnood, Maria');
     }
 
     public function configureMenuItems(): iterable
     {
-        yield MenuItem::linkToDashboard('Tableau de bord', 'fa fa-home');
-        // yield MenuItem::linkToCrud('The Label', 'fas fa-list', EntityClass::class);
+        return [
+            MenuItem::linkToDashboard('Tableau de bord', 'fa fa-home'),
+            MenuItem::linkToCrud('Utilisateurs', 'fas fa-users', Utilisateur::class),
+            MenuItem::linkToCrud('Posts', 'fas fa-file-alt', Post::class),
+        ];
+       
     }
 }

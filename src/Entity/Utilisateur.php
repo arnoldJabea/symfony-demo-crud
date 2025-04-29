@@ -2,9 +2,10 @@
 
 namespace App\Entity;
 
+use App\Enum\Role;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'utilisateurs')]
@@ -30,17 +31,16 @@ class Utilisateur
     #[ORM\Column(type: 'datetime', options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeInterface $dateCreation;
 
-    #[ORM\Column(type: 'string', enumType: \App\Enum\Role::class)]
-    private \App\Enum\Role $role;
-
     #[ORM\OneToMany(mappedBy: 'utilisateur', targetEntity: Post::class, cascade: ['remove'])]
     private Collection $posts;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $role = 'utilisateur';
 
     public function __construct()
     {
         $this->dateCreation = new \DateTime();
         $this->posts = new ArrayCollection();
-        $this->role = \App\Enum\Role::UTILISATEUR;
     }
 
     // Getters et Setters
@@ -104,17 +104,6 @@ class Utilisateur
         return $this;
     }
 
-    public function getRole(): \App\Enum\Role
-    {
-        return $this->role;
-    }
-
-    public function setRole(\App\Enum\Role $role): self
-    {
-        $this->role = $role;
-        return $this;
-    }
-
     public function getPosts(): Collection
     {
         return $this->posts;
@@ -132,10 +121,19 @@ class Utilisateur
     public function removePost(Post $post): self
     {
         if ($this->posts->removeElement($post)) {
-            if ($post->getUtilisateur() === $this) {
-                $post->setUtilisateur(null);
-            }
         }
+        return $this;
+    }
+
+    public function getRole(): ?string
+    {
+        return $this->role;
+    }
+
+    public function setRole(?string $role): static
+    {
+        $this->role = $role;
+
         return $this;
     }
 }
