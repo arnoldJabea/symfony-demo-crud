@@ -1,58 +1,70 @@
-version: '3'
+version: '3.8'
 
 services:
-  php:
-    image: app-php
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      DATABASE_URL: 'mysql://app:!ChangeMe!@database:3306/app?serverVersion=8&charset=utf8mb4'
-    volumes:
-      - caddy_data:/data
-      - caddy_config:/config
-
   database:
     image: mysql:8
+    container_name: symfony-demo-crud-database
+    restart: unless-stopped
     environment:
+      MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: app
       MYSQL_USER: app
-      MYSQL_PASSWORD: root
-      MYSQL_RANDOM_ROOT_PASSWORD: "true"
+      MYSQL_PASSWORD: app
+    ports:
+      - "3306:3306"
     volumes:
-      - database_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 5s
-      retries: 5
-      start_period: 60s
+      - db_data:/var/lib/mysql
+
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: symfony-demo-crud-php
+    restart: unless-stopped
+    depends_on:
+      - database
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      APP_ENV: dev
+      DATABASE_URL: "mysql://app:app@database:3306/app?serverVersion=8.0&charset=utf8mb4"
+
+  postgres:
+    image: postgres:13
+    container_name: symfony-demo-crud-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonar
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   sonarqube:
-    image: sonarqube:latest
+    image: sonarqube:community
+    container_name: symfony-demo-crud-sonarqube
     restart: unless-stopped
+    depends_on:
+      - postgres
     ports:
       - "9000:9000"
     environment:
-      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
-    volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_extensions:/opt/sonarqube/extensions
+      SONAR_JDBC_URL: jdbc:postgresql://postgres:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
 
   sonar-scanner:
-    image: sonarsource/sonar-scanner-cli:5
-    platform: linux/amd64
+    image: sonarsource/sonar-scanner-cli
+    container_name: symfony-demo-crud-sonar-scanner
     depends_on:
       - sonarqube
-    environment:
-      - SONAR_HOST_URL=http://sonarqube:9000
-      - SONAR_LOGIN=squ_de94c1348c50f96ac389d47333505ed5b32839f9
     volumes:
       - .:/usr/src
-    working_dir: /usr/src
+    environment:
+      - SONAR_HOST_URL=http://sonarqube:9000
 
 volumes:
-  database_data:
-  caddy_data:
-  caddy_config:
-  sonarqube_data:
-  sonarqube_extensions:
+  db_data:
+  postgres_data:
